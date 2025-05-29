@@ -102,7 +102,7 @@ private let wl_storage_directory_url: URL = {
 #else
     let debug_flag = ""
 #endif
-    let url = documentDirectoryURL.appending(component: ".wlstorage\(debug_flag)", directoryHint: .isDirectory)
+    let url = documentDirectoryURL.appending(component: ".wlstorage\(debug_flag)", isDirectory: true)
     do {
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
     } catch {
@@ -113,7 +113,7 @@ private let wl_storage_directory_url: URL = {
 
 private extension WLStorage {
     private static func fileURL(key: String) -> URL {
-        wl_storage_directory_url.appending(component: key, directoryHint: .notDirectory)
+        wl_storage_directory_url.appending(component: key, isDirectory: false)
     }
 
     static func readFromDisk(key: String) -> T? {
@@ -136,6 +136,25 @@ private extension WLStorage {
         } catch {
             assertionFailure("[WLStorage] Write failed: \(error)")
             return false
+        }
+    }
+}
+
+private extension URL {
+    func appending(
+        component: String,
+        isDirectory: Bool
+    ) -> URL {
+        if #available(iOS 16, macOS 13, *) {
+            return appending(
+                component: component,
+                directoryHint: isDirectory ? .isDirectory : .notDirectory
+            )
+        } else {
+            return appendingPathComponent(
+                component,
+                isDirectory: isDirectory
+            )
         }
     }
 }

@@ -12,12 +12,15 @@ let package = Package(
             name: "WLStorage",
             targets: ["WLStorage"])
     ],
+    dependencies: [
+        .package(url: "https://github.com/nalexn/ViewInspector.git", from: "0.10.0")
+    ],
     targets: [
         .target(
             name: "WLStorage"),
         .testTarget(
             name: "WLStorageTests",
-            dependencies: ["WLStorage"]
+            dependencies: ["ViewInspector", "WLStorage"]
         )
     ]
 )

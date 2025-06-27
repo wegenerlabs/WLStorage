@@ -48,6 +48,10 @@ private class WLStorageTestsContainer {
         _testDictionary.flush()
         _testStruct.flush()
     }
+
+    var testStringStorage: WLStorage<String?> {
+        return _testString
+    }
 }
 
 class WLStorageTests: XCTestCase {
@@ -170,5 +174,17 @@ class WLStorageTests: XCTestCase {
         container.testString = uuid2 // throttled
         Thread.sleep(forTimeInterval: 2)
         XCTAssertEqual(WLStorageTestsContainer().testString, uuid2)
+    }
+
+    @MainActor
+    func testObservable() {
+        let container = WLStorageTestsContainer()
+        let expectation = expectation(description: "objectWillChange should emit")
+        let cancellable  = container.testStringStorage.objectWillChange.sink {
+            expectation.fulfill()
+        }
+        container.testString = UUID().uuidString
+        waitForExpectations(timeout: 1)
+        withExtendedLifetime(cancellable) {}
     }
 }

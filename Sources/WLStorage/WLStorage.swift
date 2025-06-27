@@ -3,18 +3,20 @@ import AppKit
 #endif
 import Combine
 import Foundation
+import SwiftUI
 #if canImport(UIKit)
 import UIKit
 #endif
 
 @propertyWrapper
-public class WLStorage<T: Codable> {
+public final class WLStorage<T: Codable & Sendable>: ObservableObject, @unchecked Sendable {
     public let key: String
     private let memoryQueue: DispatchQueue
     private var memoryValue: T
     private var flushPending = false
     private let flushPublisher = PassthroughSubject<(), Never>()
     private var cancellables = Set<AnyCancellable>()
+    public let objectWillChange = ObservableObjectPublisher()
 
     public init(key: String, defaultValueClosure: () -> T) {
         self.key = key
@@ -72,12 +74,17 @@ public class WLStorage<T: Codable> {
                 memoryValue
             }
         } set {
+            objectWillChange.send()
             memoryQueue.sync {
                 memoryValue = newValue
                 flushPending = true
                 flushPublisher.send(())
             }
         }
+    }
+
+    public var binding: Binding<T> {
+        return Binding(get: { self.wrappedValue }, set: { self.wrappedValue = $0 })
     }
 
     public func flush() {

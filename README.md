@@ -18,6 +18,18 @@ Declare a property with the `@WLStorage` wrapper providing a unique key and a de
 var firstName: String?
 ```
 
+WLStorage is observable and compatible with SwiftUI:
+
+```swift
+private struct MyView: View {
+    @EnvironmentObject var storage: WLStorage<String>
+
+    var body: some View {
+        TextField("Label", text: $storage.wrappedValue)
+    }
+}
+```
+
 - On first access, `WLStorage` attempts to load the value from disk.
 - If no value exists, the default is saved and used.
 - Updates to the property are cached and asynchronously saved to disk, throttled to once per second.
@@ -48,6 +60,8 @@ init(key: String, defaultValueClosure: () -> T)
 ### Properties
 
 - `wrappedValue: T` — The cached value.
+
+- `binding: Binding<T>` — The SwiftUI binding.
 
 ### Methods
 

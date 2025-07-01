@@ -1,8 +1,8 @@
-import XCTest
-import SwiftUI
 import Combine
+import SwiftUI
 import ViewInspector
 @testable import WLStorage
+import XCTest
 
 class WLStorageViewTests: XCTestCase {
     private struct MyView: View {

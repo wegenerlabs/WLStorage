@@ -67,6 +67,14 @@ init(key: String, defaultValueClosure: () -> T)
 
 - `flush()` — Forces a synchronous write of the cached value to disk.
 
+## Code style
+
+Code should be formatted with `swiftformat` (default settings):
+```bash
+brew install swiftformat
+swiftformat .
+```
+
 ## License
 
 MIT License

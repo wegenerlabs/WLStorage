@@ -1,11 +1,11 @@
 #if !targetEnvironment(macCatalyst) && canImport(AppKit)
-import AppKit
+    import AppKit
 #endif
 import Combine
 import Foundation
 import SwiftUI
 #if canImport(UIKit)
-import UIKit
+    import UIKit
 #endif
 
 @propertyWrapper
@@ -14,7 +14,7 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject, @unchecke
     private let memoryQueue: DispatchQueue
     private var memoryValue: T
     private var flushPending = false
-    private let flushPublisher = PassthroughSubject<(), Never>()
+    private let flushPublisher = PassthroughSubject<Void, Never>()
     private var cancellables = Set<AnyCancellable>()
     public let objectWillChange = ObservableObjectPublisher()
 
@@ -43,29 +43,29 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject, @unchecke
                 self?.flush()
             }
             .store(in: &cancellables)
-#if !targetEnvironment(macCatalyst) && canImport(AppKit)
-        NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)
-            .sink { [weak self] _ in
-                self?.flush()
-            }
-            .store(in: &cancellables)
-#endif
-#if canImport(UIKit)
-        NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)
-            .sink { [weak self] _ in
-                self?.flush()
-            }
-            .store(in: &cancellables)
-        NotificationCenter.default.publisher(for: UIApplication.willTerminateNotification)
-            .sink { [weak self] _ in
-                self?.flush()
-            }
-            .store(in: &cancellables)
-#endif
+        #if !targetEnvironment(macCatalyst) && canImport(AppKit)
+            NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)
+                .sink { [weak self] _ in
+                    self?.flush()
+                }
+                .store(in: &cancellables)
+        #endif
+        #if canImport(UIKit)
+            NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)
+                .sink { [weak self] _ in
+                    self?.flush()
+                }
+                .store(in: &cancellables)
+            NotificationCenter.default.publisher(for: UIApplication.willTerminateNotification)
+                .sink { [weak self] _ in
+                    self?.flush()
+                }
+                .store(in: &cancellables)
+        #endif
     }
 
     public convenience init(key: String, defaultValue: T) {
-        self.init(key: key, defaultValueClosure: { return defaultValue })
+        self.init(key: key, defaultValueClosure: { defaultValue })
     }
 
     public var wrappedValue: T {
@@ -89,7 +89,7 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject, @unchecke
 
     public func flush() {
         memoryQueue.sync {
-            if flushPending && WLStorage<T>.writeToDisk(key: key, value: memoryValue) {
+            if flushPending, WLStorage<T>.writeToDisk(key: key, value: memoryValue) {
                 flushPending = false
             }
         }
@@ -104,11 +104,11 @@ private let wl_storage_directory_url: URL = {
     guard let documentDirectoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
         fatalError("[WLStorage] Document directory not found")
     }
-#if DEBUG
-    let debug_flag = "_debug"
-#else
-    let debug_flag = ""
-#endif
+    #if DEBUG
+        let debug_flag = "_debug"
+    #else
+        let debug_flag = ""
+    #endif
     let url = documentDirectoryURL.appending(component: ".wlstorage\(debug_flag)", isDirectory: true)
     do {
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)

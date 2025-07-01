@@ -1,5 +1,5 @@
-import XCTest
 @testable import WLStorage
+import XCTest
 
 private struct Animal: Codable {
     var species: String
@@ -180,7 +180,7 @@ class WLStorageTests: XCTestCase {
     func testObservable() {
         let container = WLStorageTestsContainer()
         let expectation = expectation(description: "objectWillChange should emit")
-        let cancellable  = container.testStringStorage.objectWillChange.sink {
+        let cancellable = container.testStringStorage.objectWillChange.sink {
             expectation.fulfill()
         }
         container.testString = UUID().uuidString

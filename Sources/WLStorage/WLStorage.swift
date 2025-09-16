@@ -8,7 +8,7 @@ import Foundation
 #endif
 
 @propertyWrapper
-public final class WLStorage<T: Codable & Sendable>: ObservableObject, @unchecked Sendable {
+public final class WLStorage<T: Codable & Sendable>: ObservableObject {
     public let key: String
     private let memoryQueue: DispatchQueue
     private var memoryValue: T

@@ -167,13 +167,24 @@ class WLStorageTests: XCTestCase {
     }
 
     func testThrottle() {
-        let container = WLStorageTestsContainer()
+        var container: WLStorageTestsContainer? = WLStorageTestsContainer()
         let uuid1 = UUID().uuidString
         let uuid2 = UUID().uuidString
-        container.testString = uuid1 // saved almost immediately
-        container.testString = uuid2 // throttled
+        let uuid3 = UUID().uuidString
+        let uuid4 = UUID().uuidString
+
+        container!.testString = uuid1 // should not be throttled
+        Thread.sleep(forTimeInterval: 0.25) // slight delay, async flush
+        XCTAssertEqual(WLStorageTestsContainer().testString, uuid1)
+
+        container!.testString = uuid2 // should be throttled
         Thread.sleep(forTimeInterval: 2)
         XCTAssertEqual(WLStorageTestsContainer().testString, uuid2)
+
+        container!.testString = uuid3
+        container!.testString = uuid4
+        container = nil // deinit, sync flush
+        XCTAssertEqual(WLStorageTestsContainer().testString, uuid4)
     }
 
     @MainActor

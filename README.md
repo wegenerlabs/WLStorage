@@ -61,8 +61,6 @@ init(key: String, defaultValueClosure: () -> T)
 
 - `wrappedValue: T` — The cached value.
 
-- `binding: Binding<T>` — The SwiftUI binding.
-
 ### Methods
 
 - `flush()` — Forces a synchronous write of the cached value to disk.

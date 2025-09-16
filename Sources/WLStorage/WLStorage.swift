@@ -3,7 +3,6 @@
 #endif
 import Combine
 import Foundation
-import SwiftUI
 #if canImport(UIKit)
     import UIKit
 #endif
@@ -81,10 +80,6 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject, @unchecke
                 flushPublisher.send(())
             }
         }
-    }
-
-    public var binding: Binding<T> {
-        return Binding(get: { self.wrappedValue }, set: { self.wrappedValue = $0 })
     }
 
     public func flush() {

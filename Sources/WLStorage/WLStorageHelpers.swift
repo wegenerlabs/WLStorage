@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 
 private let wl_storage_directory_url: URL = {
@@ -20,7 +21,13 @@ private let wl_storage_directory_url: URL = {
 
 extension WLStorage {
     private static func fileURL(key: String) -> URL {
-        wl_storage_directory_url.appending(component: key, isDirectory: false)
+        let fileName: String
+        if (1 ... 127).contains(key.count) {
+            fileName = key
+        } else {
+            fileName = key.sha256
+        }
+        return wl_storage_directory_url.appending(component: fileName, isDirectory: false)
     }
 
     static func readFromDisk(key: String) -> T? {
@@ -63,5 +70,13 @@ private extension URL {
                 isDirectory: isDirectory
             )
         }
+    }
+}
+
+private extension String {
+    var sha256: String {
+        let data = Data(utf8)
+        let hash = SHA256.hash(data: data)
+        return hash.map { String(format: "%02x", $0) }.joined()
     }
 }

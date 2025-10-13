@@ -215,4 +215,13 @@ class WLStorageTests: XCTestCase {
         waitForExpectations(timeout: 1)
         withExtendedLifetime(cancellable) {}
     }
+
+    func testLongKey() {
+        let key = String(repeating: "t", count: 1024)
+        var a: WLStorage? = WLStorage(key: key, defaultValue: 1)
+        a?.wrappedValue = 2
+        a = nil
+        let b = WLStorage(key: key, defaultValue: 1)
+        XCTAssertEqual(b.wrappedValue, 2)
+    }
 }

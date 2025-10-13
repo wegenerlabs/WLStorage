@@ -21,6 +21,9 @@ private class WLStorageTestsContainer {
     @WLStorage(key: "testString", defaultValue: nil)
     var testString: String?
 
+    @WLStorage(key: "testStringSlow", defaultValue: nil, flushInterval: 3)
+    var testStringSlow: String?
+
     @WLStorage(key: "testData", defaultValue: Data([0x61]))
     var testData: Data
 
@@ -42,6 +45,7 @@ private class WLStorageTestsContainer {
         _testFloat.flush()
         _testDouble.flush()
         _testString.flush()
+        _testStringSlow.flush()
         _testData.flush()
         _testArray.flush()
         _testSet.flush()
@@ -51,6 +55,10 @@ private class WLStorageTestsContainer {
 
     var testStringStorage: WLStorage<String?> {
         return _testString
+    }
+
+    var testStringSlowStorage: WLStorage<String?> {
+        return _testStringSlow
     }
 }
 
@@ -174,17 +182,26 @@ class WLStorageTests: XCTestCase {
         let uuid4 = UUID().uuidString
 
         container!.testString = uuid1 // should not be throttled
+        container?.testStringSlow = uuid1 // should not be throttled
         Thread.sleep(forTimeInterval: 0.25) // slight delay, async flush
         XCTAssertEqual(WLStorageTestsContainer().testString, uuid1)
+        XCTAssertEqual(WLStorageTestsContainer().testStringSlow, uuid1)
 
         container!.testString = uuid2 // should be throttled
+        container!.testStringSlow = uuid2 // should be throttled
         Thread.sleep(forTimeInterval: 2)
         XCTAssertEqual(WLStorageTestsContainer().testString, uuid2)
+        XCTAssertEqual(WLStorageTestsContainer().testStringSlow, uuid1) // not yet!
+        Thread.sleep(forTimeInterval: 2)
+        XCTAssertEqual(WLStorageTestsContainer().testStringSlow, uuid2)
 
         container!.testString = uuid3
+        container!.testStringSlow = uuid3
         container!.testString = uuid4
+        container!.testStringSlow = uuid4
         container = nil // deinit, sync flush
         XCTAssertEqual(WLStorageTestsContainer().testString, uuid4)
+        XCTAssertEqual(WLStorageTestsContainer().testStringSlow, uuid4)
     }
 
     @MainActor

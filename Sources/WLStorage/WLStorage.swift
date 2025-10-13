@@ -17,7 +17,7 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     public let objectWillChange = ObservableObjectPublisher()
 
-    public init(key: String, defaultValueClosure: () -> T) {
+    public init(key: String, defaultValueClosure: () -> T, flushInterval: Int? = 1) {
         self.key = key
         memoryQueue = DispatchQueue(
             label: "com.wegenerlabs.WLStorage.\(key).memory",
@@ -36,12 +36,14 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject {
             label: "com.wegenerlabs.WLStorage.\(key).flush",
             qos: .userInitiated
         )
-        flushPublisher
-            .throttle(for: .seconds(1), scheduler: flushQueue, latest: true)
-            .sink { [weak self] _ in
-                self?.flush()
-            }
-            .store(in: &cancellables)
+        if let flushInterval {
+            flushPublisher
+                .throttle(for: .seconds(flushInterval), scheduler: flushQueue, latest: true)
+                .sink { [weak self] _ in
+                    self?.flush()
+                }
+                .store(in: &cancellables)
+        }
         #if !targetEnvironment(macCatalyst) && canImport(AppKit)
             NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)
                 .sink { [weak self] _ in
@@ -63,8 +65,8 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject {
         #endif
     }
 
-    public convenience init(key: String, defaultValue: T) {
-        self.init(key: key, defaultValueClosure: { defaultValue })
+    public convenience init(key: String, defaultValue: T, flushInterval: Int? = 1) {
+        self.init(key: key, defaultValueClosure: { defaultValue }, flushInterval: flushInterval)
     }
 
     public var wrappedValue: T {

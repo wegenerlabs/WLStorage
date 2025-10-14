@@ -1,24 +1,6 @@
 import CryptoKit
 import Foundation
 
-private let wl_storage_directory_url: URL = {
-    guard let documentDirectoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
-        fatalError("[WLStorage] Document directory not found")
-    }
-    #if DEBUG
-        let debug_flag = "_debug"
-    #else
-        let debug_flag = ""
-    #endif
-    let url = documentDirectoryURL.appending(component: ".wlstorage\(debug_flag)", isDirectory: true)
-    do {
-        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-    } catch {
-        fatalError("[WLStorage] Failed to create directory: \(error)")
-    }
-    return url
-}()
-
 extension WLStorage {
     static func readFromDisk(fileURL: URL) -> T? {
         guard let data = try? Data(contentsOf: fileURL), data.count > 0 else {
@@ -76,12 +58,30 @@ extension String {
         } else {
             fileName = self
         }
-        return wl_storage_directory_url.appending(component: fileName, isDirectory: false)
+        return storageDirectoryURL.appending(component: fileName, isDirectory: false)
     }
 
     private var sha256: String {
         let data = Data(utf8)
         let hash = SHA256.hash(data: data)
         return hash.map { String(format: "%02x", $0) }.joined()
+    }
+
+    private var storageDirectoryURL: URL {
+        guard let documentDirectoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            fatalError("[WLStorage] Document directory not found")
+        }
+        #if DEBUG
+            let debug_flag = "_debug"
+        #else
+            let debug_flag = ""
+        #endif
+        let url = documentDirectoryURL.appending(component: ".wlstorage\(debug_flag)", isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        } catch {
+            fatalError("[WLStorage] Failed to create directory: \(error)")
+        }
+        return url
     }
 }

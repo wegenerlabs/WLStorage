@@ -20,18 +20,8 @@ private let wl_storage_directory_url: URL = {
 }()
 
 extension WLStorage {
-    private static func fileURL(key: String) -> URL {
-        let fileName: String
-        if (1 ... 127).contains(key.count) {
-            fileName = key
-        } else {
-            fileName = key.sha256
-        }
-        return wl_storage_directory_url.appending(component: fileName, isDirectory: false)
-    }
-
-    static func readFromDisk(key: String) -> T? {
-        guard let data = try? Data(contentsOf: fileURL(key: key)), data.count > 0 else {
+    static func readFromDisk(fileURL: URL) -> T? {
+        guard let data = try? Data(contentsOf: fileURL), data.count > 0 else {
             return nil
         }
         do {
@@ -42,10 +32,10 @@ extension WLStorage {
         }
     }
 
-    static func writeToDisk(key: String, value: T) -> Bool {
+    static func writeToDisk(fileURL: URL, value: T) -> Bool {
         do {
             let data = try JSONEncoder().encode(value)
-            try data.write(to: fileURL(key: key))
+            try data.write(to: fileURL)
             return true
         } catch {
             assertionFailure("[WLStorage] Write failed: \(error)")
@@ -73,8 +63,23 @@ private extension URL {
     }
 }
 
-private extension String {
-    var sha256: String {
+extension String {
+    var keyToFileURL: URL {
+        let allowedCharacters = CharacterSet
+            .alphanumerics
+            .union(
+                CharacterSet(charactersIn: "_-.")
+            )
+        let fileName: String
+        if isEmpty || count > 127 || rangeOfCharacter(from: allowedCharacters.inverted) != nil {
+            fileName = sha256
+        } else {
+            fileName = self
+        }
+        return wl_storage_directory_url.appending(component: fileName, isDirectory: false)
+    }
+
+    private var sha256: String {
         let data = Data(utf8)
         let hash = SHA256.hash(data: data)
         return hash.map { String(format: "%02x", $0) }.joined()

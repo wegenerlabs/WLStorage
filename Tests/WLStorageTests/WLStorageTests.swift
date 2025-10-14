@@ -216,9 +216,40 @@ class WLStorageTests: XCTestCase {
         withExtendedLifetime(cancellable) {}
     }
 
+    func testNormalKey() {
+        let key = "abcABC.-_"
+        var a: WLStorage? = WLStorage(key: key, defaultValue: 1)
+        XCTAssertEqual(a?.key, a?.fileURL.lastPathComponent)
+        a?.wrappedValue = 2
+        a = nil
+        let b = WLStorage(key: key, defaultValue: 1)
+        XCTAssertEqual(b.wrappedValue, 2)
+    }
+
     func testLongKey() {
         let key = String(repeating: "t", count: 1024)
         var a: WLStorage? = WLStorage(key: key, defaultValue: 1)
+        XCTAssertEqual(a?.fileURL.lastPathComponent, "3ca0903dc7f20cee7c4d65f83df4968296be28eaf7f339668b1add6d60416afd")
+        a?.wrappedValue = 2
+        a = nil
+        let b = WLStorage(key: key, defaultValue: 1)
+        XCTAssertEqual(b.wrappedValue, 2)
+    }
+
+    func testShortKey() {
+        let key = ""
+        var a: WLStorage? = WLStorage(key: key, defaultValue: 1)
+        XCTAssertEqual(a?.fileURL.lastPathComponent, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+        a?.wrappedValue = 2
+        a = nil
+        let b = WLStorage(key: key, defaultValue: 1)
+        XCTAssertEqual(b.wrappedValue, 2)
+    }
+
+    func testSlashKey() {
+        let key = "/"
+        var a: WLStorage? = WLStorage(key: key, defaultValue: 1)
+        XCTAssertEqual(a?.fileURL.lastPathComponent, "8a5edab282632443219e051e4ade2d1d5bbc671c781051bf1437897cbdfea0f1")
         a?.wrappedValue = 2
         a = nil
         let b = WLStorage(key: key, defaultValue: 1)

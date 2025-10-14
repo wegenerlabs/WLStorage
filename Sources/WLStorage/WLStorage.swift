@@ -10,6 +10,7 @@ import Foundation
 @propertyWrapper
 public final class WLStorage<T: Codable & Sendable>: ObservableObject {
     public let key: String
+    public let fileURL: URL
     private let memoryQueue: DispatchQueue
     private var memoryValue: T
     private var flushPending = false
@@ -19,16 +20,18 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject {
 
     public init(key: String, defaultValueClosure: () -> T, flushInterval: Int? = 1) {
         self.key = key
+        let fileURL = key.keyToFileURL
+        self.fileURL = fileURL
         memoryQueue = DispatchQueue(
             label: "com.wegenerlabs.WLStorage.\(key).memory",
             qos: .userInitiated
         )
         memoryValue = {
-            if let diskValue: T = WLStorage<T>.readFromDisk(key: key) {
+            if let diskValue: T = WLStorage<T>.readFromDisk(fileURL: fileURL) {
                 return diskValue
             } else {
                 let defaultValue = defaultValueClosure()
-                _ = WLStorage<T>.writeToDisk(key: key, value: defaultValue)
+                _ = WLStorage<T>.writeToDisk(fileURL: fileURL, value: defaultValue)
                 return defaultValue
             }
         }()
@@ -86,7 +89,7 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject {
 
     public func flush() {
         memoryQueue.sync {
-            if flushPending, WLStorage<T>.writeToDisk(key: key, value: memoryValue) {
+            if flushPending, WLStorage<T>.writeToDisk(fileURL: fileURL, value: memoryValue) {
                 flushPending = false
             }
         }

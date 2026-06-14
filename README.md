@@ -41,7 +41,7 @@ private struct MyView: View {
 
 Throws a `fatalError` if the storage directory cannot be created.
 Throws an `assertionFailure` if read/decode fails and uses default value.
-Throws an `assertionFailure` if encode/write fails and retries.
+Throws an `assertionFailure` if encode/write fails.
 
 ## API
 

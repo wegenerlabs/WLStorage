@@ -14,14 +14,12 @@ extension WLStorage {
         }
     }
 
-    static func writeToDisk(fileURL: URL, value: T) -> Bool {
+    static func writeToDisk(fileURL: URL, value: T) {
         do {
             let data = try JSONEncoder().encode(value)
             try data.write(to: fileURL)
-            return true
         } catch {
             assertionFailure("[WLStorage] Write failed: \(error)")
-            return false
         }
     }
 }

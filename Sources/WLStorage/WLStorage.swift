@@ -31,7 +31,7 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject {
                 return diskValue
             } else {
                 let defaultValue = defaultValueClosure()
-                _ = WLStorage<T>.writeToDisk(fileURL: fileURL, value: defaultValue)
+                WLStorage<T>.writeToDisk(fileURL: fileURL, value: defaultValue)
                 return defaultValue
             }
         }()
@@ -89,7 +89,8 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject {
 
     public func flush() {
         memoryQueue.sync {
-            if flushPending, WLStorage<T>.writeToDisk(fileURL: fileURL, value: memoryValue) {
+            if flushPending {
+                WLStorage<T>.writeToDisk(fileURL: fileURL, value: memoryValue)
                 flushPending = false
             }
         }

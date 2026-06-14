@@ -15,6 +15,7 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject {
     private var memoryValue: T
     private var flushPending = false
     private let flushPublisher = PassthroughSubject<Void, Never>()
+    private let diskQueue: DispatchQueue
     private var cancellables = Set<AnyCancellable>()
     public let objectWillChange = ObservableObjectPublisher()
 
@@ -39,8 +40,13 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject {
             label: "com.wegenerlabs.WLStorage.\(key).flush",
             qos: .userInitiated
         )
+        diskQueue = DispatchQueue(
+            label: "com.wegenerlabs.WLStorage.\(key).disk",
+            qos: .userInitiated
+        )
         if let flushInterval {
             flushPublisher
+                .receive(on: flushQueue)
                 .throttle(for: .seconds(flushInterval), scheduler: flushQueue, latest: true)
                 .sink { [weak self] _ in
                     self?.flush()
@@ -82,17 +88,24 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject {
             memoryQueue.sync {
                 memoryValue = newValue
                 flushPending = true
-                flushPublisher.send(())
             }
+            flushPublisher.send(())
         }
     }
 
     public func flush() {
-        memoryQueue.sync {
-            if flushPending {
-                WLStorage<T>.writeToDisk(fileURL: fileURL, value: memoryValue)
+        diskQueue.sync {
+            let snapshot: T? = memoryQueue.sync {
+                guard flushPending else {
+                    return nil
+                }
                 flushPending = false
+                return memoryValue
             }
+            guard let snapshot else {
+                return
+            }
+            WLStorage<T>.writeToDisk(fileURL: fileURL, value: snapshot)
         }
     }
 

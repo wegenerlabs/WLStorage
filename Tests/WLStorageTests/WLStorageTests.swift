@@ -455,6 +455,28 @@ class WLStorageTests: XCTestCase {
         withExtendedLifetime(cancellable) {}
     }
 
+    @MainActor
+    func testBackgroundMutationPublishesObjectWillChangeOnMainThread() {
+        let storage = WLStorage(
+            defaultValueClosure: { "" },
+            flushInterval: nil,
+            backer: TestBacker(key: "backgroundObservable", storedValue: "")
+        )
+        let storageBox = UncheckedSendableBox(storage)
+        let expectation = expectation(description: "background objectWillChange should emit on main thread")
+        let cancellable = storage.objectWillChange.sink {
+            XCTAssertTrue(Thread.isMainThread)
+            expectation.fulfill()
+        }
+
+        DispatchQueue.global(qos: .userInitiated).async {
+            storageBox.value.wrappedValue = UUID().uuidString
+        }
+
+        waitForExpectations(timeout: 1)
+        withExtendedLifetime(cancellable) {}
+    }
+
     func testInjectedBackerInitializesFromBacker() {
         let backer = TestBacker(key: "injectedInitialization", storedValue: 42)
         let storage = WLStorage(

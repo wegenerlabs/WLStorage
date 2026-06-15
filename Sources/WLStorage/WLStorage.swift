@@ -15,6 +15,7 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject {
     private var flushPending = false
     private let flushPublisher = PassthroughSubject<Void, Never>()
     private let diskQueue: DispatchQueue
+    private let changePublisher = PassthroughSubject<Void, Never>()
     private var cancellables = Set<AnyCancellable>()
     public let objectWillChange = ObservableObjectPublisher()
 
@@ -42,6 +43,12 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject {
                 }
                 .store(in: &cancellables)
         }
+        changePublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [objectWillChange] _ in
+                objectWillChange.send()
+            }
+            .store(in: &cancellables)
         #if !targetEnvironment(macCatalyst) && canImport(AppKit)
             NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)
                 .sink { [weak self] _ in
@@ -73,7 +80,11 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject {
                 memoryValue
             }
         } set {
-            objectWillChange.send()
+            if Thread.isMainThread {
+                objectWillChange.send()
+            } else {
+                changePublisher.send(())
+            }
             memoryQueue.sync {
                 memoryValue = newValue
                 flushPending = true

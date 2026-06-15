@@ -75,7 +75,7 @@ public class WLStorageDefaultBacker<T: Codable & Sendable>: WLStorageBacker {
         }
         do {
             let data = try JSONEncoder().encode(value)
-            try data.write(to: fileURL)
+            try data.write(to: fileURL, options: [.atomic])
         } catch {
             assertionFailure("[WLStorage] Write failed: \(error)")
         }

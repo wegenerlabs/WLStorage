@@ -679,6 +679,29 @@ class WLStorageTests: XCTestCase {
         XCTAssertEqual(b.wrappedValue, 2)
     }
 
+    func testMaximumLengthKey() {
+        let key = String(repeating: "t", count: 127)
+        var a: WLStorage? = makeStorage(key: key, defaultValue: 1)
+        let fileURL = WLStorageDefaultBacker<Int>(key: key, directory: temporaryDirectory).fileURL!
+        XCTAssertEqual(fileURL.lastPathComponent, key)
+        XCTAssertEqual(a!.key, fileURL.lastPathComponent)
+        a?.wrappedValue = 2
+        a = nil
+        let b = makeStorage(key: key, defaultValue: 1)
+        XCTAssertEqual(b.wrappedValue, 2)
+    }
+
+    func testOverMaximumLengthKey() {
+        let key = String(repeating: "t", count: 128)
+        var a: WLStorage? = makeStorage(key: key, defaultValue: 1)
+        let fileURL = WLStorageDefaultBacker<Int>(key: key, directory: temporaryDirectory).fileURL!
+        XCTAssertEqual(fileURL.lastPathComponent, "9fc73bfdab7bf74ecb69af224adcefca194ce379842402e334a7547653a66abe")
+        a?.wrappedValue = 2
+        a = nil
+        let b = makeStorage(key: key, defaultValue: 1)
+        XCTAssertEqual(b.wrappedValue, 2)
+    }
+
     func testShortKey() {
         let key = ""
         var a: WLStorage? = makeStorage(key: key, defaultValue: 1)
@@ -695,6 +718,39 @@ class WLStorageTests: XCTestCase {
         var a: WLStorage? = makeStorage(key: key, defaultValue: 1)
         let fileURL = WLStorageDefaultBacker<Int>(key: key, directory: temporaryDirectory).fileURL!
         XCTAssertEqual(fileURL.lastPathComponent, "8a5edab282632443219e051e4ade2d1d5bbc671c781051bf1437897cbdfea0f1")
+        a?.wrappedValue = 2
+        a = nil
+        let b = makeStorage(key: key, defaultValue: 1)
+        XCTAssertEqual(b.wrappedValue, 2)
+    }
+
+    func testDotKey() {
+        let key = "."
+        var a: WLStorage? = makeStorage(key: key, defaultValue: 1)
+        let fileURL = WLStorageDefaultBacker<Int>(key: key, directory: temporaryDirectory).fileURL!
+        XCTAssertEqual(fileURL.lastPathComponent, "cdb4ee2aea69cc6a83331bbe96dc2caa9a299d21329efb0336fc02a82e1839a8")
+        a?.wrappedValue = 2
+        a = nil
+        let b = makeStorage(key: key, defaultValue: 1)
+        XCTAssertEqual(b.wrappedValue, 2)
+    }
+
+    func testDoubleDotKey() {
+        let key = ".."
+        var a: WLStorage? = makeStorage(key: key, defaultValue: 1)
+        let fileURL = WLStorageDefaultBacker<Int>(key: key, directory: temporaryDirectory).fileURL!
+        XCTAssertEqual(fileURL.lastPathComponent, "5ec1f7e700f37c3d0b2981d04855fc34b94aaa15457b05ca571817442d228f81")
+        a?.wrappedValue = 2
+        a = nil
+        let b = makeStorage(key: key, defaultValue: 1)
+        XCTAssertEqual(b.wrappedValue, 2)
+    }
+
+    func testNormalLongKey() {
+        let key = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._"
+        var a: WLStorage? = makeStorage(key: key, defaultValue: 1)
+        let fileURL = WLStorageDefaultBacker<Int>(key: key, directory: temporaryDirectory).fileURL!
+        XCTAssertEqual(a!.key, fileURL.lastPathComponent)
         a?.wrappedValue = 2
         a = nil
         let b = makeStorage(key: key, defaultValue: 1)

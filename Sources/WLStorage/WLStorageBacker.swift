@@ -22,15 +22,23 @@ public class WLStorageDefaultBacker<T: Codable & Sendable>: WLStorageBacker {
             return
         }
         let filename = {
-            let allowedCharacters = CharacterSet
-                .alphanumerics
-                .union(
-                    CharacterSet(charactersIn: "_-.")
-                )
-            if key.isEmpty || key.count > 127 || key.rangeOfCharacter(from: allowedCharacters.inverted) != nil {
-                return key.sha256
-            } else {
+            let isSafeKey =
+                !key.isEmpty &&
+                key != "." &&
+                key != ".." &&
+                key.count <= 127 &&
+                key.utf8.allSatisfy { byte in
+                    (48 ... 57).contains(byte) || // 0-9
+                        (65 ... 90).contains(byte) || // A-Z
+                        (97 ... 122).contains(byte) || // a-z
+                        byte == 45 || // -
+                        byte == 46 || // .
+                        byte == 95 // _
+                }
+            if isSafeKey {
                 return key
+            } else {
+                return key.sha256
             }
         }()
         fileURL = directory.appending(component: filename, isDirectory: false)

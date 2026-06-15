@@ -9,8 +9,7 @@ import Foundation
 
 @propertyWrapper
 public final class WLStorage<T: Codable & Sendable>: ObservableObject {
-    public let key: String
-    public let fileURL: URL
+    private let backer: any WLStorageBacker<T>
     private let memoryQueue: DispatchQueue
     private var memoryValue: T
     private var flushPending = false
@@ -19,29 +18,19 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     public let objectWillChange = ObservableObjectPublisher()
 
-    public init(key: String, defaultValueClosure: () -> T, flushInterval: Int? = 1) {
-        self.key = key
-        let fileURL = key.keyToFileURL
-        self.fileURL = fileURL
+    public init(defaultValueClosure: () -> T, flushInterval: Int? = 1, backer: any WLStorageBacker<T>) {
+        self.backer = backer
         memoryQueue = DispatchQueue(
-            label: "com.wegenerlabs.WLStorage.\(key).memory",
+            label: "com.wegenerlabs.WLStorage.\(backer.key).memory",
             qos: .userInitiated
         )
-        memoryValue = {
-            if let diskValue: T = WLStorage<T>.readFromDisk(fileURL: fileURL) {
-                return diskValue
-            } else {
-                let defaultValue = defaultValueClosure()
-                WLStorage<T>.writeToDisk(fileURL: fileURL, value: defaultValue)
-                return defaultValue
-            }
-        }()
+        memoryValue = backer.read(defaultValueClosure: defaultValueClosure)
         let flushQueue = DispatchQueue(
-            label: "com.wegenerlabs.WLStorage.\(key).flush",
+            label: "com.wegenerlabs.WLStorage.\(backer.key).flush",
             qos: .userInitiated
         )
         diskQueue = DispatchQueue(
-            label: "com.wegenerlabs.WLStorage.\(key).disk",
+            label: "com.wegenerlabs.WLStorage.\(backer.key).disk",
             qos: .userInitiated
         )
         if let flushInterval {
@@ -74,8 +63,8 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject {
         #endif
     }
 
-    public convenience init(key: String, defaultValue: T, flushInterval: Int? = 1) {
-        self.init(key: key, defaultValueClosure: { defaultValue }, flushInterval: flushInterval)
+    public var key: String {
+        return backer.key
     }
 
     public var wrappedValue: T {
@@ -105,11 +94,23 @@ public final class WLStorage<T: Codable & Sendable>: ObservableObject {
             guard let snapshot else {
                 return
             }
-            WLStorage<T>.writeToDisk(fileURL: fileURL, value: snapshot)
+            backer.write(value: snapshot)
         }
     }
 
     deinit {
         flush()
+    }
+}
+
+public extension WLStorage {
+    convenience init(key: String, defaultValue: T, flushInterval: Int? = 1) {
+        let backer = WLStorageDefaultBacker<T>(key: key)
+        self.init(defaultValueClosure: { defaultValue }, flushInterval: flushInterval, backer: backer)
+    }
+
+    convenience init(key: String, defaultValueClosure: () -> T, flushInterval: Int? = 1) {
+        let backer = WLStorageDefaultBacker<T>(key: key)
+        self.init(defaultValueClosure: defaultValueClosure, flushInterval: flushInterval, backer: backer)
     }
 }

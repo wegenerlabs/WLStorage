@@ -37,11 +37,11 @@ private struct MyView: View {
 - The stored files are saved in the app's Documents directory under `.wlstorage` (or `.wlstorage_debug` in debug builds).
 - The in-memory value is read, written and flushed in a private serial queue to ensure thread safety.
 
-### Error handling
+### Default disk and serialization error handling
 
-Throws a `fatalError` if the storage directory cannot be created.
-Throws an `assertionFailure` if read/decode fails and uses default value.
-Throws an `assertionFailure` if encode/write fails.
+- Throws an `assertionFailure` if storage directory URL is unavailable.
+- Throws an `assertionFailure` if decode or read fails.
+- Throws an `assertionFailure` if encode or write fails.
 
 ## API
 

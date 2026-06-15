@@ -1,7 +1,6 @@
-import Combine
 import SwiftUI
 import ViewInspector
-@testable import WLStorage
+import WLStorage
 import XCTest
 
 class WLStorageViewTests: XCTestCase {
@@ -13,19 +12,21 @@ class WLStorageViewTests: XCTestCase {
         }
     }
 
-    @WLStorage(key: "testString", defaultValue: "")
-    private var storage: String
-
     @MainActor
     func test() throws {
+        let storage = WLStorage(
+            defaultValueClosure: { "" },
+            flushInterval: nil,
+            backer: TestBacker(key: "viewStorage", storedValue: "")
+        )
         let view = MyView()
-            .environmentObject(_storage)
+            .environmentObject(storage)
         let textField = try view.inspect().find(ViewType.TextField.self)
         var string = UUID().uuidString
         try textField.setInput(string)
-        XCTAssertEqual(storage, string)
+        XCTAssertEqual(storage.wrappedValue, string)
         string = UUID().uuidString
         try textField.setInput(string)
-        XCTAssertEqual(storage, string)
+        XCTAssertEqual(storage.wrappedValue, string)
     }
 }

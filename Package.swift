@@ -18,7 +18,8 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "WLStorage"),
+            name: "WLStorage"
+        ),
         .testTarget(
             name: "WLStorageTests",
             dependencies: ["ViewInspector", "WLStorage"]

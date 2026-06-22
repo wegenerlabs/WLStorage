@@ -162,6 +162,7 @@ private class WLStorageTestsContainer {
     private let _testSet: WLStorage<Set<String>>
     private let _testDictionary: WLStorage<[String: Double]>
     private let _testStruct: WLStorage<Animal>
+    private let _testOptionalDate: WLStorage<Date?>
 
     init(directory: URL) {
         _testBool = Self.storage(key: "testBool", defaultValue: true, directory: directory)
@@ -175,6 +176,7 @@ private class WLStorageTestsContainer {
         _testSet = Self.storage(key: "testSet", defaultValue: ["a"], directory: directory)
         _testDictionary = Self.storage(key: "testDictionary", defaultValue: ["a": 1], directory: directory)
         _testStruct = Self.storage(key: "testStruct", defaultValue: Animal(species: "Lion"), directory: directory)
+        _testOptionalDate = Self.storage(key: "testOptionalDate", defaultValue: nil, directory: directory)
     }
 
     var testBool: Bool {
@@ -232,6 +234,11 @@ private class WLStorageTestsContainer {
         set { _testStruct.wrappedValue = newValue }
     }
 
+    var testOptionalDate: Date? {
+        get { _testOptionalDate.wrappedValue }
+        set { _testOptionalDate.wrappedValue = newValue }
+    }
+
     func flush() {
         _testBool.flush()
         _testInt.flush()
@@ -244,6 +251,7 @@ private class WLStorageTestsContainer {
         _testSet.flush()
         _testDictionary.flush()
         _testStruct.flush()
+        _testOptionalDate.flush()
     }
 
     var testStringStorage: WLStorage<String?> {
@@ -411,6 +419,32 @@ class WLStorageTests: XCTestCase {
         XCTAssertEqual(container.testStruct.species, "Dog")
         container.flush()
         XCTAssertEqual(makeContainer().testStruct.species, "Dog")
+    }
+
+    func testDate() {
+        let container = makeContainer()
+        XCTAssertNil(container.testOptionalDate)
+
+        container.testOptionalDate = .distantPast
+        XCTAssertEqual(container.testOptionalDate, .distantPast)
+        container.flush()
+        XCTAssertEqual(makeContainer().testOptionalDate, .distantPast)
+
+        container.testOptionalDate = .distantFuture
+        XCTAssertEqual(container.testOptionalDate, .distantFuture)
+        container.flush()
+        XCTAssertEqual(makeContainer().testOptionalDate, .distantFuture)
+
+        container.testOptionalDate = nil
+        XCTAssertNil(container.testOptionalDate)
+        container.flush()
+        XCTAssertNil(makeContainer().testOptionalDate)
+
+        let now = Date()
+        container.testOptionalDate = now
+        XCTAssertEqual(container.testOptionalDate, now)
+        container.flush()
+        XCTAssertEqual(makeContainer().testOptionalDate, now)
     }
 
     func testThrottle() {
